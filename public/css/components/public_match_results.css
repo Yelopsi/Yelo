@@ -125,7 +125,9 @@
 
 .match-body { padding: 30px 25px; text-align: left; flex-grow: 1; display: flex; flex-direction: column; }
 .match-name { font-size: 1.6rem; color: var(--verde-escuro); margin: 0 0 4px 0; font-family: var(--font-titulos); line-height: 1.2;}
-.match-crp { font-size: 0.85rem; color: #888; margin-bottom: 20px; display: block; font-weight: 500;}
+.match-crp { font-size: 0.85rem; color: #888; margin-bottom: 10px; display: block; font-weight: 500;}
+.match-modality { display: inline-flex; align-items: center; gap: 6px; width: fit-content; max-width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; color: var(--verde-escuro); padding: 5px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; margin-bottom: 16px; line-height: 1.25; }
+.match-modality-icon { display: inline-flex; align-items: center; justify-content: center; color: #15803d; flex-shrink: 0; }
 .match-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
 .match-tag { background: #f0fdf4; color: var(--verde-escuro); border: 1px solid #c8e6c9; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .match-bio { font-size: 0.95rem; color: #555; line-height: 1.6; margin-bottom: 25px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }

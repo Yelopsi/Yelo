@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-4457c0c9",
+    "date": "2026-11-28T17:10:15.000Z",
+    "commit": "4457c0c9",
+    "author": "Anderson",
+    "title": "Correção: Count paid quota leads from subscribedAt instead of trial window (match)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "count paid quota leads from subscribedAt instead of trial window",
+    "description": "Commit registrado no repositório: \"fix(match): count paid quota leads from subscribedAt instead of trial window\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, backend/services/matchService.js, security/reports/gate_report.json, security/tests/match_paid_quota_window.test.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4457c0c9"
+    },
+    "after": {
+      "nova_versao": "count paid quota leads from subscribedAt instead of trial window"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "backend/services/matchService.js",
+      "security/reports/gate_report.json",
+      "security/tests/match_paid_quota_window.test.js"
+    ]
+  },
+  {
     "id": "change-git-001494f0",
     "date": "2026-11-28T16:35:07.000Z",
     "commit": "001494f0",

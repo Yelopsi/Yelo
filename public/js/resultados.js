@@ -47,6 +47,54 @@ document.addEventListener('DOMContentLoaded', () => {
         return text;
     }
 
+    function formatModalityInfo(rawModalidade) {
+        let items = [];
+        if (Array.isArray(rawModalidade)) {
+            items = rawModalidade;
+        } else if (typeof rawModalidade === 'string' && rawModalidade.trim() !== '') {
+            const trimmed = rawModalidade.trim();
+            if (trimmed.startsWith('[')) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    if (Array.isArray(parsed)) items = parsed;
+                } catch (e) {
+                    items = [trimmed];
+                }
+            } else {
+                items = trimmed.split(/[,/|]+/);
+            }
+        }
+
+        const normalized = items
+            .map(item => String(item || '').trim().toLowerCase())
+            .filter(Boolean);
+
+        if (normalized.length === 0) return null;
+
+        const hasHybridKeyword = normalized.some(v =>
+            v.includes('híbrid') || v.includes('hibrid') || v.includes('ambos') || v.includes('indiferente')
+        );
+        const hasOnline = hasHybridKeyword || normalized.some(v => v.includes('online'));
+        const hasPresencial = hasHybridKeyword || normalized.some(v => v.includes('presencial'));
+
+        if (hasOnline && hasPresencial) {
+            return { type: 'both', label: 'Atende Online e Presencial' };
+        }
+        if (hasOnline) {
+            return { type: 'online', label: 'Atende Online' };
+        }
+        if (hasPresencial) {
+            return { type: 'presencial', label: 'Atende Presencial' };
+        }
+        return null;
+    }
+
+    const MODALITY_ICONS = {
+        online: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>',
+        presencial: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
+        both: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+    };
+
     function createCard(profile) {
         console.log("Card Data:", profile);
         // NOVA LÓGICA: Usa os motivos gerados pela IA ou faz fallback para as antigas tags
@@ -132,6 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="match-body">
                     <h3 id="nome-${profile.id}" class="match-name"></h3>
                     <span id="crp-${profile.id}" class="match-crp"></span>
+                    <div id="modalidade-${profile.id}" class="match-modality" style="display: none;">
+                        <span id="modalidade-icon-${profile.id}" class="match-modality-icon" aria-hidden="true"></span>
+                        <span id="modalidade-text-${profile.id}"></span>
+                    </div>
                     
                     ${reasonsHtml}
                     
@@ -384,6 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tipo_cobranca: p.tipo_cobranca || 'sessao',
                 valor_sessao_numero: p.valor_sessao_numero,
                 valor_mensal_numero: p.valor_mensal_numero,
+                modalidade: p.modalidade,
                 bio: p.bio || "Sem biografia.",
                 miniBio: p.miniBio,
                 slug: p.slug,
@@ -414,6 +467,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const crpEl = document.getElementById(`crp-${profile.id}`);
                 if (crpEl) crpEl.textContent = `CRP ${profile.crp || 'Não informado'}`;
+
+                const modalityInfo = formatModalityInfo(profile.modalidade);
+                const modalidadeEl = document.getElementById(`modalidade-${profile.id}`);
+                const modalidadeIconEl = document.getElementById(`modalidade-icon-${profile.id}`);
+                const modalidadeTextEl = document.getElementById(`modalidade-text-${profile.id}`);
+                if (modalidadeEl && modalidadeTextEl && modalityInfo) {
+                    if (modalidadeIconEl) modalidadeIconEl.innerHTML = MODALITY_ICONS[modalityInfo.type] || '';
+                    modalidadeTextEl.textContent = modalityInfo.label;
+                    modalidadeEl.style.display = 'inline-flex';
+                } else if (crpEl) {
+                    crpEl.style.marginBottom = '20px';
+                }
 
                 // Injeção de atributos segura via setAttribute e validação de base
                 const imgEl = document.getElementById(`img-${profile.id}`);

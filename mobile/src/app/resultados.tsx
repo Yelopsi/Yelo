@@ -164,6 +164,48 @@ export default function ResultadosScreen() {
     return 'Perfil altamente compatível com suas prioridades e estilo de condução.';
   };
 
+  const formatModalityInfo = (rawModalidade: any) => {
+    let items: any[] = [];
+    if (Array.isArray(rawModalidade)) {
+      items = rawModalidade;
+    } else if (typeof rawModalidade === 'string' && rawModalidade.trim() !== '') {
+      const trimmed = rawModalidade.trim();
+      if (trimmed.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) items = parsed;
+        } catch (e) {
+          items = [trimmed];
+        }
+      } else {
+        items = trimmed.split(/[,/|]+/);
+      }
+    }
+
+    const normalized = items
+      .map((item) => String(item || '').trim().toLowerCase())
+      .filter(Boolean);
+
+    if (normalized.length === 0) return null;
+
+    const hasHybridKeyword = normalized.some((v) =>
+      v.includes('híbrid') || v.includes('hibrid') || v.includes('ambos') || v.includes('indiferente')
+    );
+    const hasOnline = hasHybridKeyword || normalized.some((v) => v.includes('online'));
+    const hasPresencial = hasHybridKeyword || normalized.some((v) => v.includes('presencial'));
+
+    if (hasOnline && hasPresencial) {
+      return { icon: 'check-circle' as const, label: 'Atende Online e Presencial' };
+    }
+    if (hasOnline) {
+      return { icon: 'video' as const, label: 'Atende Online' };
+    }
+    if (hasPresencial) {
+      return { icon: 'map-pin' as const, label: 'Atende Presencial' };
+    }
+    return null;
+  };
+
   if (isLoading) {
     return (
       <View className="flex-1 bg-white items-center justify-center p-6">
@@ -229,6 +271,7 @@ export default function ResultadosScreen() {
                   : (profile.valor_sessao_numero || profile.valor_mensal_numero);
                 const priceFormatted = formatPrice(rawPrice);
                 const reason = getReasonText(profile);
+                const modalityInfo = formatModalityInfo(profile.modalidade);
 
                 return (
                   <TouchableOpacity 
@@ -278,9 +321,18 @@ export default function ResultadosScreen() {
                       <Text className="font-title text-[#1B4332] text-[24px] leading-[28px] mb-1">
                         {profile.nome}
                       </Text>
-                      <Text className="font-sans font-medium text-[#777] text-[13px] mb-[16px]">
+                      <Text className={`font-sans font-medium text-[#777] text-[13px] ${modalityInfo ? 'mb-[10px]' : 'mb-[16px]'}`}>
                         CRP {profile.crp}
                       </Text>
+
+                      {modalityInfo ? (
+                        <View className="self-start flex-row items-center gap-1.5 bg-[#f8fafc] border border-[#e2e8f0] px-[10px] py-[5px] rounded-full mb-[16px]">
+                          <Feather name={modalityInfo.icon} size={13} color="#15803d" />
+                          <Text className="font-sans font-semibold text-[#1B4332] text-[12px]">
+                            {modalityInfo.label}
+                          </Text>
+                        </View>
+                      ) : null}
 
                       {/* Motivo de Recomendação (Caixa Verde Claro) */}
                       {reason ? (
