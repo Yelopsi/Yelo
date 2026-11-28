@@ -173,6 +173,7 @@ router.get('/me/stats', safeProtect, psiDashboardController.getStats);
 router.get('/me', safeProtect, psychologistController.getAuthenticatedPsychologistProfile);
 router.get('/me/analytics', safeProtect, psiDashboardController.getAnalyticsData);
 router.get('/me/announcements', safeProtect, psiDashboardController.getAnnouncements);
+router.post('/me/announcements/read-all', safeProtect, psiDashboardController.markAllAnnouncementsAsRead);
 router.post('/me/announcements/:avisoId/read', safeProtect, psiDashboardController.markAnnouncementAsRead);
 router.get('/me/qna-unanswered-count', safeProtect, psychologistController.getUnansweredQuestionsCount);
 router.post('/me/sync-google-reviews', safeProtect, psychologistController.syncGoogleReviews);
@@ -200,6 +201,7 @@ router.get('/me/analytics', psiDashboardController.getAnalyticsData);
 router.post('/me/ai-insights', psiDashboardController.getAiInsights);
 
 router.get('/me/announcements', psiDashboardController.getAnnouncements);
+router.post('/me/announcements/read-all', psiDashboardController.markAllAnnouncementsAsRead);
 router.post('/me/announcements/:avisoId/read', psiDashboardController.markAnnouncementAsRead);
 
 // ROTA DE ESTATÍSTICAS REAIS (KPIs) - Já registrada acima com safeProtect

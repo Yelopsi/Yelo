@@ -179,16 +179,18 @@ export default function AvisosScreen() {
     const unreadList = avisos.filter((a) => !a.read);
     if (unreadList.length === 0 || markingAll) return;
 
+    const unreadIds = new Set(unreadList.map((a) => a.id));
     try {
       setMarkingAll(true);
       setAvisos((prev) => prev.map((a) => ({ ...a, read: true })));
 
-      await Promise.allSettled(
-        unreadList.map((a) =>
-          api.post(`/api/psychologists/me/announcements/${a.id}/read`)
-        )
-      );
+      await api.post('/api/psychologists/me/announcements/read-all', {
+        avisoIds: Array.from(unreadIds),
+      });
     } catch (e) {
+      setAvisos((prev) =>
+        prev.map((a) => (unreadIds.has(a.id) ? { ...a, read: false } : a))
+      );
       console.warn('Erro ao marcar todos como lidos:', e);
     } finally {
       setMarkingAll(false);

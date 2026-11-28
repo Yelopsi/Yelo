@@ -721,6 +721,11 @@ exports.getAnnouncements = async (req, res) => {
         // Sincroniza notificação da edição semanal de sexta-feira
         await syncFridayEditionsToAvisos();
 
+        const psiRecord = psychologistId
+            ? await db.Psychologist.findByPk(psychologistId, { attributes: ['id', 'createdAt'] })
+            : null;
+        const psiCreatedAtMs = psiRecord && psiRecord.createdAt ? new Date(psiRecord.createdAt).getTime() : 0;
+
         const avisos = await db.Aviso.findAll({
             where: {
                 status: 'published',
@@ -832,7 +837,22 @@ exports.getAnnouncements = async (req, res) => {
             ).catch(err => console.error("Erro ao sincronizar avisos inativos:", err));
         }
 
-        const responseData = validAvisos.map(aviso => {
+        const NEW_ACCOUNT_PRE_SIGNUP_LIMIT = 10;
+        let preSignupGlobalIncluded = 0;
+        const scopedAvisos = [];
+        for (const aviso of validAvisos) {
+            const isPersonal = Boolean(psychologistId && aviso.psychologistId === psychologistId);
+            const avisoCreatedMs = aviso.createdAt ? new Date(aviso.createdAt).getTime() : 0;
+            const isAfterSignup = !psiCreatedAtMs || avisoCreatedMs >= psiCreatedAtMs;
+            if (isPersonal || isAfterSignup) {
+                scopedAvisos.push(aviso);
+            } else if (preSignupGlobalIncluded < NEW_ACCOUNT_PRE_SIGNUP_LIMIT) {
+                scopedAvisos.push(aviso);
+                preSignupGlobalIncluded += 1;
+            }
+        }
+
+        const responseData = scopedAvisos.map(aviso => {
             const avisoObj = aviso.toJSON ? aviso.toJSON() : { ...aviso };
             let contentStr = avisoObj.content || '';
 
@@ -874,12 +894,66 @@ exports.getAnnouncements = async (req, res) => {
     }
 };
 
+exports.markAllAnnouncementsAsRead = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
+        if (!psychologistId) return res.status(401).json({ error: 'Não autorizado.' });
+        if (db.Aviso) await db.Aviso.sync();
+        if (db.AvisoLido) await db.AvisoLido.sync();
+
+        const requestedIds = Array.isArray(req.body?.avisoIds)
+            ? [...new Set(req.body.avisoIds.map(id => parseInt(id, 10)).filter(id => Number.isInteger(id) && id > 0))]
+            : [];
+
+        const visibleAvisos = await db.Aviso.findAll({
+            where: {
+                status: 'published',
+                [Op.or]: [
+                    { psychologistId: null },
+                    { psychologistId }
+                ],
+                ...(requestedIds.length > 0 ? { id: requestedIds } : {})
+            },
+            attributes: ['id']
+        });
+
+        const targetIds = visibleAvisos.map(a => a.id);
+        if (targetIds.length === 0) {
+            return res.status(200).json({ message: 'Nenhum aviso pendente.', markedCount: 0 });
+        }
+
+        const existing = await db.AvisoLido.findAll({
+            where: { psychologistId, avisoId: targetIds },
+            attributes: ['avisoId']
+        });
+        const alreadyRead = new Set(existing.map(l => l.avisoId));
+        const rowsToCreate = targetIds
+            .filter(id => !alreadyRead.has(id))
+            .map(avisoId => ({ psychologistId, avisoId }));
+
+        if (rowsToCreate.length > 0) {
+            await db.AvisoLido.bulkCreate(rowsToCreate);
+        }
+
+        res.status(200).json({
+            message: 'Todos os avisos foram marcados como lidos.',
+            markedCount: rowsToCreate.length
+        });
+    } catch (error) {
+        console.error('Erro em markAllAnnouncementsAsRead:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
 exports.markAnnouncementAsRead = async (req, res) => {
     try {
         const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
-        const { avisoId } = req.params;
+        const avisoId = parseInt(req.params.avisoId, 10);
+        if (!Number.isInteger(avisoId) || avisoId <= 0) {
+            return res.status(400).json({ error: 'ID de aviso inválido.' });
+        }
         if (db.AvisoLido) await db.AvisoLido.sync();
-        await db.AvisoLido.findOrCreate({ where: { avisoId: avisoId, psychologistId: psychologistId } });
+        await db.AvisoLido.findOrCreate({ where: { avisoId, psychologistId } });
         res.status(200).json({ message: 'Aviso marcado como lido.' });
     } catch (error) { res.status(500).json({ error: 'Erro interno no servidor.' }); }
 };
