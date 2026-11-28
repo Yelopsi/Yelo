@@ -172,6 +172,23 @@ window.initializePage = function() {
             todayHtml: '<strong>🚨 Hoje completa 14 dias dos ajustes de SEO!</strong> Puxe o Search Console, cheque indexação das perguntas e otimize títulos de menor CTR.',
             overdueHtml: (daysAgo) => `<strong>⚠️ Revisão de SEO Pendente (${daysAgo} dia${daysAgo > 1 ? 's' : ''} atrás):</strong> Prazo de 14 dias pós-sitemap encerrou em 30/11.`
         });
+
+        updateScheduledAlert({
+            targetIso: '2027-01-02T00:00:00-03:00',
+            shortDate: '02/01',
+            cardId: 'card-alert-jan27-verify',
+            daysId: 'jan27-verify-days',
+            titleId: 'jan27-verify-title',
+            actionId: 'jan27-verify-action',
+            defaultAction: 'Acompanhar pagamentos na DRE',
+            defaultAccent: '#6d28d9',
+            defaultBorder: '#7c3aed',
+            defaultBg: '#f5f3ff',
+            tomorrowAction: 'Preparar conferência da virada (02/01)',
+            dueAction: 'Validar Asaas & DRE agora →',
+            todayHtml: '<strong>🚨 Hora de validar a Virada Jan/2027!</strong> Confira no Asaas e em Payments: novos cadastros em Comunidade, 1ª assinatura 1x/parcelada com trial D+7 sem cobrar hoje e conversão do cron até 08/01.',
+            overdueHtml: (daysAgo) => `<strong>⚠️ Validação Pós-Virada Jan/2027 (${daysAgo} dia${daysAgo > 1 ? 's' : ''} após 02/01):</strong> Conferir assinaturas 1x/parceladas no Asaas, conversão D+7 do cron (08/01) e webhooks em Payments.`
+        });
     }
 
     // Listas de IDs para animação de carregamento

@@ -253,6 +253,28 @@ async function checkAndExecuteTrafficScalingJobs() {
                 console.log('🎯 [CRON TRAFFIC] Alerta de Reavaliação Estratégica (08/12) criado no painel admin.');
             }
         }
+
+        // 5. Validação da Virada Jan/2027 (Comunidade, 1x/Parcelado & D+7 Cartão): a partir de 02/01/2027
+        if (brtDateStr >= '2027-01-02') {
+            const existingJan27Verify = await db.AdminAdjustment.findOne({
+                where: { title: { [db.Sequelize.Op.like]: '%Validação Virada Jan/2027%' } }
+            });
+
+            if (!existingJan27Verify) {
+                await db.AdminAdjustment.create({
+                    title: '🛡️ Validação Virada Jan/2027: Comunidade, 1x/Parcelado & D+7 Cartão (02/01 a 08/01)',
+                    target_page: 'admin_dre.html',
+                    file_path: 'backend/jobs/cronScheduler.js',
+                    category: 'Financeiro & Produto',
+                    environment: 'admin',
+                    device: 'todos',
+                    priority: 'alta',
+                    status: 'pendente',
+                    notes: `Virada automática de 01/01/2027 ativada. Conferir entre 02/01 e 08/01 no Asaas de produção e em Payments/DRE: 1) Novos cadastros entrando corretamente no Plano Comunidade (Grátis) sem vazamento no Match; 2) Primeira contratação real 1x ou parcelada (Trimestral/Semestral) tokenizando sem cobrar no D+0 do trial; 3) Primeira conversão automática D+7 via processTokenizedTrials (~08/01) e emissão de NFS-e CNPJ.`
+                });
+                console.log('🛡️ [CRON TRAFFIC] Alerta de Validação Virada Jan/2027 criado no painel admin.');
+            }
+        }
     } catch (err) {
         console.error('❌ [CRON TRAFFIC] Erro na verificação de tráfego e Black Friday:', err.message);
     }

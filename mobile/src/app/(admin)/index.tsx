@@ -773,6 +773,46 @@ export default function AdminVisaoGeralScreen() {
             );
           })()}
 
+          {/* Alerta Programado: Validação Virada Jan/2027 (02/01 a 08/01) */}
+          {(() => {
+            const target = new Date('2027-01-02T00:00:00-03:00');
+            const diffDays = Math.ceil((target.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            const isDue = diffDays <= 0;
+            const isTomorrow = diffDays === 1;
+            const bgClass = isDue ? 'bg-[#fef2f2] border-[#fecaca]' : isTomorrow ? 'bg-[#fffbeb] border-[#fde68a]' : 'bg-[#f5f3ff] border-[#ddd6fe]';
+            const accentColor = isDue ? '#dc2626' : isTomorrow ? '#d97706' : '#6d28d9';
+            return (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push('/(admin)/crm-modulo/dre')}
+                className={`flex-row items-center border rounded-[16px] p-3.5 mb-3 ${bgClass}`}
+              >
+                <Text className="text-[22px] mr-3">🛡️</Text>
+                <View className="flex-1">
+                  {isDue ? (
+                    <Text className="font-sans text-[#1e293b] text-[13px]">
+                      <Text className="font-bold text-[#dc2626]">
+                        {diffDays === 0 ? '🚨 Validar Virada Jan/2027 hoje!' : `⚠️ Validação Virada Jan/2027 (${Math.abs(diffDays)}d após 02/01):`}
+                      </Text>{' '}
+                      Conferir no Asaas/DRE novos cadastros em Comunidade, 1x/parcelado e primeira conversão D+7 do cron (~08/01).
+                    </Text>
+                  ) : (
+                    <Text className="font-sans text-[#1e293b] text-[13px]">
+                      <Text className="font-bold text-[#4c1d95]">Validação Virada Jan/2027:</Text> Conferir Comunidade, 1x/parcelado e D+7 em{' '}
+                      <Text className="font-bold" style={{ color: accentColor }}>
+                        {isTomorrow ? 'Amanhã (02/01)!' : `Faltam ${diffDays} dias (02/01)`}
+                      </Text>.
+                    </Text>
+                  )}
+                  <Text className="font-sans font-bold text-[11px] mt-0.5" style={{ color: accentColor }}>
+                    {isDue ? 'Validar Asaas & DRE agora →' : isTomorrow ? 'Preparar conferência da virada →' : 'Acompanhar pagamentos na DRE →'}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={16} color={accentColor} />
+              </TouchableOpacity>
+            );
+          })()}
+
           {/* Implementações Futuras & Reavaliações */}
           <TouchableOpacity
             activeOpacity={0.8}
