@@ -808,12 +808,22 @@ exports.createPreference = async (req, res) => {
                     });
                     const qrText = await qrRes.text();
                     const qrData = qrText ? JSON.parse(qrText) : {};
-                    
-                    return res.json({ 
-                        success: true, 
-                        subscriptionId: asaasRefId, 
+
+                    if (qrRes.ok && qrData && qrData.encodedImage && qrData.payload) {
+                        return res.json({
+                            success: true,
+                            subscriptionId: asaasRefId,
+                            billingType: 'PIX',
+                            invoiceUrl: firstPayment.invoiceUrl || null,
+                            pix: { encodedImage: qrData.encodedImage, payload: qrData.payload }
+                        });
+                    }
+                    return res.json({
+                        success: true,
+                        subscriptionId: asaasRefId,
                         billingType: 'PIX',
-                        pix: { encodedImage: qrData.encodedImage, payload: qrData.payload }
+                        invoiceUrl: firstPayment.invoiceUrl || null,
+                        message: 'Cobrança PIX criada. Acesse o link da fatura para visualizar o QR Code.'
                     });
                 }
             } catch (pixErr) {

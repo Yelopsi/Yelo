@@ -608,7 +608,7 @@
                 else { const text = await res.text(); throw new Error(`Erro no servidor (${res.status}). Tente novamente mais tarde.`); }
 
                 if (res.ok) {
-                    if (currentMethod === 'PIX' && data.pix) {
+                    if (currentMethod === 'PIX' && data.pix && data.pix.encodedImage && data.pix.payload) {
                         customerSection.style.display = 'none'; creditSection.style.display = 'none'; securityBadges.style.display = 'none';
                         btnSubmit.style.display = 'none'; pixResult.style.display = 'block';
                         document.getElementById('pix-qr-image').src = `data:image/png;base64,${data.pix.encodedImage}`;
@@ -639,6 +639,12 @@
                             btn.style.opacity = "0.7";
                             setTimeout(() => window.location.reload(), 1500);
                         };
+                    } else if (currentMethod === 'PIX' && data.invoiceUrl) {
+                        localStorage.removeItem('yelo_promo_coupon');
+                        if (window.showToast) window.showToast('Cobrança gerada! Abrindo fatura PIX...', 'success');
+                        window.open(data.invoiceUrl, '_blank', 'noopener,noreferrer');
+                        modal.style.setProperty('display', 'none', 'important');
+                        setTimeout(() => window.location.reload(), 1500);
                     } else {
                         localStorage.removeItem('yelo_promo_coupon');
                         window.showToast(window.isUpdatePaymentMethodMode ? 'Forma de pagamento atualizada!' : 'Assinatura realizada com sucesso!', 'success');

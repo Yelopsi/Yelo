@@ -1,5 +1,40 @@
 [
   {
+    "id": "change-git-e2722980",
+    "date": "2026-11-28T01:06:29.000Z",
+    "commit": "e2722980",
+    "author": "Anderson",
+    "title": "Novo: Alerta e controle de NFS-e manual para pagamentos CNPJ pos-7 dias (admin)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "alerta e controle de NFS-e manual para pagamentos CNPJ pos-7 dias",
+    "description": "Commit registrado no repositório: \"feat(admin): alerta e controle de NFS-e manual para pagamentos CNPJ pos-7 dias\". Arquivos modificados: admin/admin_dre.html, admin/admin_dre.js, admin/admin_visao_geral.html, admin/admin_visao_geral.js, backend/.data/system_changelog.json (+8 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e2722980"
+    },
+    "after": {
+      "nova_versao": "alerta e controle de NFS-e manual para pagamentos CNPJ pos-7 dias"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_dre.html",
+      "admin/admin_dre.js",
+      "admin/admin_visao_geral.html",
+      "admin/admin_visao_geral.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/dreController.js",
+      "backend/data/system_changelog.json",
+      "backend/routes/dreRoutes.js",
+      "backend/server.js",
+      "backend/services/dreService.js",
+      "mobile/src/app/(admin)/crm-modulo/dre.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-17e2533d",
     "date": "2026-11-28T00:25:00.000Z",
     "commit": "17e2533d",

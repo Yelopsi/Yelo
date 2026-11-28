@@ -242,7 +242,9 @@ const applyDatabaseFixes = async (db, sequelize) => {
             `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "company_legal_name" VARCHAR(255);`,
             `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "company_cnpj" VARCHAR(32);`,
             `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "tax_regime" VARCHAR(40) DEFAULT 'SIMPLES_NACIONAL';`,
-            `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "auto_recurring_expenses" TEXT;`
+            `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "auto_recurring_expenses" TEXT;`,
+            `ALTER TABLE "Payments" ADD COLUMN IF NOT EXISTS "nfIssuedAt" TIMESTAMPTZ;`,
+            `ALTER TABLE "Payments" ADD COLUMN IF NOT EXISTS "nfNumber" VARCHAR(80);`
         ];
 
         for (const sql of schemaQueries) {

@@ -298,16 +298,20 @@ async function runIntegrityAudit() {
                     }
 
                     if (!shouldBlock) {
+                        const isSinglePayRef = String(psi.subscriptionId).startsWith('pay_');
                         const queryParam = isRecurringSub
                             ? `subscription=${psi.subscriptionId}`
                             : `installment=${psi.subscriptionId}`;
-                        const pRes = await fetch(`${ASAAS_API_URL}/payments?${queryParam}`, { 
-                            headers: { 'access_token': process.env.ASAAS_API_KEY } 
+                        const pUrl = isSinglePayRef
+                            ? `${ASAAS_API_URL}/payments/${psi.subscriptionId}`
+                            : `${ASAAS_API_URL}/payments?${queryParam}`;
+                        const pRes = await fetch(pUrl, {
+                            headers: { 'access_token': process.env.ASAAS_API_KEY }
                         });
-                        
+
                         if (pRes.ok) {
                             const pData = await pRes.json();
-                            const payments = pData.data || [];
+                            const payments = isSinglePayRef ? (pData && pData.id ? [pData] : []) : (pData.data || []);
                             
                             const hasOverdue = payments.some(p => p.status === 'OVERDUE');
                             
