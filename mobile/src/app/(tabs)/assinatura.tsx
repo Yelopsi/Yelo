@@ -694,11 +694,16 @@ export default function AssinaturaScreen() {
 
       addDebugLog(`5. Resposta do backend: HTTP ${res.status}`);
 
-      if (res.data?.pix) {
+      if (res.data?.pix && res.data.pix.encodedImage && res.data.pix.payload) {
         setPixData(res.data.pix);
         addDebugLog('✅ PIX Asaas recebido!');
         setToastMessage("QR Code PIX gerado com sucesso!");
         setToastType('success');
+      } else if (res.data?.invoiceUrl) {
+        addDebugLog('✅ Cobrança PIX gerada via invoiceUrl fallback');
+        setToastMessage("Cobrança gerada! Abrindo fatura PIX...");
+        setToastType('success');
+        Linking.openURL(res.data.invoiceUrl).catch(() => {});
       } else if (isUpdatePaymentMethodMode) {
         setActiveModal('NONE');
         setToastMessage("PIX ativado! As próximas faturas serão por PIX.");
