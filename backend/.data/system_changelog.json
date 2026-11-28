@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-360b7d00",
+    "date": "2026-11-28T00:12:23.000Z",
+    "commit": "360b7d00",
+    "author": "Anderson",
+    "title": "Correção: Remover aviso de demanda no modal de checkout (ui)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "remover aviso de demanda no modal de checkout",
+    "description": "Commit registrado no repositório: \"fix(ui): remover aviso de demanda no modal de checkout\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, public/psi/psi_assinatura.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #360b7d00"
+    },
+    "after": {
+      "nova_versao": "remover aviso de demanda no modal de checkout"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_assinatura.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-b3176847",
     "date": "2026-11-28T00:07:49.000Z",
     "commit": "b3176847",
