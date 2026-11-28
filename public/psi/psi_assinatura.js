@@ -248,18 +248,14 @@
         };
         const billingDetail = formatBillingDetail(currentInstallmentCount);
 
-        const demandNote = (psychologistData && psychologistData.globalStats && (psychologistData.globalStats.matches7d > 0 || psychologistData.globalStats.clicks7d > 0))
-            ? `<div style="margin-top:8px; font-size:0.77rem; color:#0f172a; font-weight:600;">📊 Demanda real na Yelo (7 dias): ${Number(psychologistData.globalStats.matches7d || 0)} matches e ${Number(psychologistData.globalStats.clicks7d || 0)} cliques em WhatsApp</div>`
-            : '';
-
         const trialNotice = (isInTrial && dataFimTrial)
             ? `<div style="margin-top:12px; padding:10px 12px; background:rgba(22,101,52,0.06); border:1px solid #bbf7d0; border-radius:12px; font-size:0.82rem; color:#166534; line-height:1.45; display:flex; align-items:flex-start; gap:8px;">
                  <span style="font-size:1.1rem; line-height:1;">🎁</span>
                  <div>
-                   <strong>Teste de 7 dias grátis:</strong> O cartão é registrado para ativação imediata, mas <strong>nenhuma cobrança será feita hoje</strong>. O primeiro lançamento ocorre apenas em <strong>${dataFimTrial}</strong>.${demandNote}
+                   <strong>Teste de 7 dias grátis:</strong> O cartão é registrado para ativação imediata, mas <strong>nenhuma cobrança será feita hoje</strong>. O primeiro lançamento ocorre apenas em <strong>${dataFimTrial}</strong>.
                  </div>
                </div>`
-            : demandNote;
+            : '';
 
         cycleBanner.style.cssText = 'background:#f8fafc; border:1px solid rgba(15,23,42,0.08); border-radius:18px; padding:16px 18px; margin-bottom:18px; box-sizing:border-box;';
 

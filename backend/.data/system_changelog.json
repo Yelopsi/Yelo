@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-b3176847",
+    "date": "2026-11-28T00:07:49.000Z",
+    "commit": "b3176847",
+    "author": "Anderson",
+    "title": "Correção: Mover selos de seguranca para o fim do modal no mobile mantendo coluna esquerda no desktop (ui)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "mover selos de seguranca para o fim do modal no mobile mantendo coluna esquerda no desktop",
+    "description": "Commit registrado no repositório: \"fix(ui): mover selos de seguranca para o fim do modal no mobile mantendo coluna esquerda no desktop\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, public/psi/psi_assinatura.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b3176847"
+    },
+    "after": {
+      "nova_versao": "mover selos de seguranca para o fim do modal no mobile mantendo coluna esquerda no desktop"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_assinatura.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-1506bec6",
     "date": "2026-11-27T23:56:45.000Z",
     "commit": "1506bec6",
